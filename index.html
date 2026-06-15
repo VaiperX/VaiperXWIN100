@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VaiperXWIN100">
+    
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/5yRHnBvh/70A88D3F-B427-4B76-9431-11E32323D5FA.png">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/5yRHnBvh/70A88D3F-B427-4B76-9431-11E32323D5FA.png">
+
+    <title>VaiperX Premium Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Prompt', 'Orbitron', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #030000;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ================= หน้า Loading Screen ================= */
+        .video-loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .loading-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            pointer-events: none; 
+        }
+
+        .tap-prompt-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4); 
+            z-index: 10000;
+            transition: opacity 0.3s ease;
+        }
+
+        .tap-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+            animation: textPulse 1.5s infinite ease-in-out;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        .video-loading-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* ================= ส่วนโครงสร้างหน้าเมนูหลัก UI ================= */
+        .cyber-panel {
+            width: 100%;
+            max-width: 420px;
+            height: calc(100vh - 24px);
+            max-height: 820px;
+            background: #000000; 
+            border: 1px solid rgba(255, 13, 13, 0.6);
+            border-radius: 28px;
+            box-shadow: 0 0 40px rgba(255, 13, 13, 0.25), inset 0 0 20px rgba(255, 13, 13, 0.1);
+            padding: 24px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            margin: 12px;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative; 
+        }
+
+        .cyber-panel.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .ui-bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .ui-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(5, 1, 1, 0.78) 0%, rgba(15, 2, 2, 0.88) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .accordion-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 2px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 3; 
+        }
+
+        .accordion-wrapper::-webkit-scrollbar {
+            width: 0px;
+        }
+
+        .menu-section {
+            background: rgba(18, 2, 2, 0.6);
+            border: 1px solid rgba(255, 13, 13, 0.25);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .menu-section.active {
+            border-color: rgba(255, 13, 13, 0.8);
+            box-shadow: 0 0 20px rgba(255, 13, 13, 0.25);
+            background: rgba(30, 3, 3, 0.85);
+        }
+
+        .menu-header {
+            padding: 18px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cyber-icon {
+            width: 22px;
+            height: 22px;
+            fill: #ff0d0d;
+            filter: drop-shadow(0 0 6px #ff0d0d);
+            display: flex;
+            align-items: center;
+        }
+
+        .menu-title {
+            font-family: 'Orbitron', 'Prompt', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.8px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .arrow-icon {
+            width: 14px;
+            height: 14px;
+            fill: #851c1c;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .menu-section.active .arrow-icon {
+            transform: rotate(180deg);
+            fill: #ff0d0d;
+            filter: drop-shadow(0 0 4px #ff0d0d);
+        }
+
+        .menu-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .content-inner {
+            padding: 6px 18px 20px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            border-top: 1px solid rgba(255, 13, 13, 0.15);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+        }
+
+        .cyber-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .cyber-switch input { opacity: 0; width: 0; height: 0; }
+
+        .cyber-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(61, 15, 15, 0.6);
+            border: 1px solid rgba(255, 13, 13, 0.3);
+            transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 30px;
+        }
+
+        .cyber-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #a6a6a6;
+            transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 50%;
+        }
+
+        input:checked + .cyber-slider {
+            background-color: #ff0d0d;
+            border-color: #ff6666;
+            box-shadow: 0 0 12px rgba(255, 13, 13, 0.6);
+        }
+
+        input:checked + .cyber-slider:before {
+            transform: translateX(24px);
+            background-color: #ffffff;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+        }
+
+        .range-block {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .range-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .range-label {
+            width: 65px;
+            font-size: 0.88rem;
+            color: #ffffff;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .range-input {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: rgba(255, 13, 13, 0.2);
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ff0d0d;
+            cursor: pointer;
+            box-shadow: 0 0 10px #ff0d0d;
+            transition: transform 0.1s ease;
+        }
+
+        .range-input::-webkit-slider-thumb:active {
+            transform: scale(1.25);
+        }
+
+        .range-val {
+            width: 45px;
+            text-align: right;
+            font-size: 0.88rem;
+            color: #ff3333;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            text-shadow: 0 0 5px rgba(255, 51, 51, 0.4);
+        }
+
+        .grid-select {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .select-card {
+            background: rgba(20, 2, 2, 0.6);
+            border: 1px solid rgba(255, 13, 13, 0.5);
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.92rem;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(255, 13, 13, 0.1);
+        }
+
+        .select-card .radio-dot {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #ff0d0d;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .select-card .radio-dot::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ff0d0d;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 6px #ff0d0d;
+        }
+
+        .action-btn {
+            background: rgba(20, 2, 2, 0.6);
+            border: 1px solid rgba(255, 13, 13, 0.5);
+            border-radius: 14px;
+            padding: 14px;
+            color: #ffffff;
+            font-size: 0.92rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 0 15px rgba(255, 13, 13, 0.1);
+        }
+
+        .start-btn {
+            background: linear-gradient(180deg, #ff0000 0%, #b80000 100%);
+            border: 1px solid #ff6666;
+            border-radius: 14px;
+            padding: 18px;
+            color: #ffffff;
+            font-family: 'Orbitron', 'Prompt', sans-serif;
+            font-size: 1.12rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.5);
+            margin-top: 12px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.6);
+        }
+
+        .start-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 3px 10px rgba(255, 0, 0, 0.4);
+        }
+
+        .cyber-footer {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #8c2727;
+            letter-spacing: 1.5px;
+            margin-top: 12px;
+            border-top: 1px solid rgba(255, 13, 13, 0.2);
+            padding-top: 14px;
+            position: relative;
+            z-index: 3;
+        }
+        
+        .cyber-footer span {
+            color: #ff0d0d;
+            text-shadow: 0 0 6px rgba(255, 13, 13, 0.7);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-loading-screen" id="loadingScreen" onclick="startIntroVideo()">
+        <div class="tap-prompt-overlay" id="promptOverlay">
+            <div class="tap-text">แตะจอ 1 ครั้งเพื่อเข้าสู่ระบบ</div>
+        </div>
+        
+        <video class="loading-video" id="introVideo" playsinline muted preload="auto" loop>
+            <source src="https://www.image2url.com/r2/default/videos/1781556257881-4c6e1a59-38c2-4960-a2a1-16268972ec80.mov" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="cyber-panel" id="mainPanel">
+        
+        <video class="ui-bg-video" id="uiBgVideo" autoplay loop muted playsinline webkit-playsinline preload="auto">
+            <source src="https://www.image2url.com/r2/default/videos/1781557880330-ac57abd5-fc32-4b1d-ad6f-4e061738b4b5.mp4" type="video/mp4">
+        </video>
+        
+        <div class="ui-video-overlay"></div>
+        
+        <div class="accordion-wrapper">
+            
+            <div class="menu-section" id="sec-aimbots">
+                <div class="menu-header" onclick="toggleAccordion('sec-aimbots')">
+                    <div class="header-left">
+                        <svg class="cyber-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7.06-3.6-7.55-7.55H7v-2H5.45c.49-3.95 3.6-7.06 7.55-7.55V5h2v1.45c3.95.49 7.06 3.6 7.55 7.55H21v2h-1.45c-.49 3.95-3.6 7.06-7.55 7.55V19.93zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                        <span class="menu-title">PANEL FREEFIRE AIMBOTS</span>
+                    </div>
+                    <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+                </div>
+                <div class="menu-content">
+                    <div class="content-inner">
+                        <div class="control-row">
+                            <span>AIMBOTS 100%</span>
+                            <label class="cyber-switch"><input type="checkbox"><span class="cyber-slider"></span></label>
+                        </div>
+                        <div class="control-row">
+                            <span>ดูดหัว</span>
+                            <label class="cyber-switch"><input type="checkbox"><span class="cyber-slider"></span></label>
+                        </div>
+                        <div class="control-row">
+                            <span>ลดแรงดีด</span>
+                            <label class="cyber-switch"><input type="checkbox"><span class="cyber-slider"></span></label>
+                        </div>
+                        <div class="control-row">
+                            <span>กระสุนตรง</span>
+                            <label class="cyber-switch"><input type="checkbox"><span class="cyber-slider"></span></label>
+                        </div>
+                        <div class="control-row">
+                            <span>ขยายดาเมจหัว</span>
+                            <label class="cyber-switch"><input type="checkbox"><span class="cyber-slider"></span></label>
+                        </div>
+                        <div class="control-row">
+                            <span>AUTO AIMHEAD</span>
+                            <label class="cyber-switch"><input type="checkbox"><span class="cyber-slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-section" id="sec-screen">
+                <div class="menu-header" onclick="toggleAccordion('sec-screen')">
+                    <div class="header-left">
+                        <svg class="cyber-icon" viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                        <span class="menu-title">SET UP THE SCREEN</span>
+                    </div>
+                    <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+                </div>
+                <div class="menu-content">
+                    <div class="content-inner">
+                        <div class="range-block">
+                            <div class="range-row">
+                                <span class="range-label">จอเร็ว</span>
+                                <input type="range" class="range-input" id="quickScreenRange" min="0" max="500" value="250" oninput="updateRangeValue(this, 'val1')">
+                                <span class="range-val" id="val1">250%</span>
+                            </div>
+                            <div class="range-row">
+                                <span class="range-label">จอลื่น</span>
+                                <input type="range" class="range-input" min="0" max="100" value="90" oninput="updateRangeValue(this, 'val2')">
+                                <span class="range-val" id="val2">90%</span>
+                            </div>
+                            <div class="range-row">
+                                <span class="range-label">มุมFOV</span>
+                                <input type="range" class="range-input" min="0" max="360" value="360" oninput="updateRangeValue(this, 'val3')">
+                                <span class="range-val" id="val3">360%</span>
+                            </div>
+                            <div class="range-row">
+                                <span class="range-label">DPI แกน</span>
+                                <input type="range" class="range-input" min="0" max="100" value="10" oninput="updateRangeValue(this, 'val4')">
+                                <span class="range-val" id="val4">10%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-section" id="sec-device">
+                <div class="menu-header" onclick="toggleAccordion('sec-device')">
+                    <div class="header-left">
+                        <svg class="cyber-icon" viewBox="0 0 24 24"><path d="M15 9H9v6h6V9zm-2 4h-2v-2h2v2zm8-2V9h-2V7c0-1.1-.9-2-2-2h-2V3h-2v2h-2V3H9v2H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h2v2h2v-2h2v2h2v-2h2c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2zm-4 6H7V7h10v10z"/></svg>
+                        <span class="menu-title">เลือกเลือกรุ่นมือถือ</span>
+                    </div>
+                    <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+                </div>
+                <div class="menu-content">
+                    <div class="content-inner">
+                        <div class="grid-select">
+                            <div class="select-card">
+                                <span class="radio-dot"></span> iOS
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-section" id="sec-game">
+                <div class="menu-header" onclick="toggleAccordion('sec-game')">
+                    <div class="header-left">
+                        <svg class="cyber-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5 0.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                        <span class="menu-title">เลือกตัวเกมส์</span>
+                    </div>
+                    <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+                </div>
+                <div class="menu-content">
+                    <div class="content-inner">
+                        <div class="grid-select">
+                            <button class="action-btn">Free Fire Max</button>
+                        </div>
+                        <button class="start-btn" onclick="launchPotatso()">Start Game</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="cyber-footer">
+            DEVELOPED BY: <span>@VaiperX</span> / 2026 XIZ
+        </div>
+
+    </div>
+
+    <script>
+        // ================= ระบบความปลอดภัยฝั่ง Client เบื้องต้น =================
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        document.addEventListener('keydown', function(e) {
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && e.keyCode === 85) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        setInterval(function() {
+            const before = new Date().getTime();
+            debugger;
+            const after = new Date().getTime();
+            if (after - before > 100) {
+                console.clear();
+            }
+        }, 1000);
+
+        // ================= ฟังก์ชันสั่งดีดเด้งเปิดแอป Potatso =================
+        function launchPotatso() {
+            // ใช้ URL Scheme หลักของแอป Potatso เพื่อสั่งเปิดแอปบน iOS
+            window.location.href = "potatso://";
+            
+            // ชุดโค้ดสำรองกรณีตัวแอปยังไม่ได้เปิดใช้งานหรือดาวน์โหลด จะเด้งไปลิงก์ App Store ให้แทนใน 1.5 วินาที
+            setTimeout(function() {
+                if (!document.webkitHidden && !document.hidden) {
+                    window.location.href = "https://apps.apple.com/th/app/potatso/id1239860606";
+                }
+            }, 1500);
+        }
+
+        // ================= ส่วนควบคุม UI หน้าเว็บ =================
+        const video = document.getElementById('introVideo');
+        const uiBgVideo = document.getElementById('uiBgVideo');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const mainPanel = document.getElementById('mainPanel');
+        const promptOverlay = document.getElementById('promptOverlay');
+        
+        let hasStarted = false; 
+
+        window.onload = function() {
+            document.querySelectorAll('.menu-section').forEach(section => {
+                section.classList.remove('active');
+                section.querySelector('.menu-content').style.maxHeight = null;
+            });
+
+            const quickScreenRange = document.getElementById('quickScreenRange');
+            quickScreenRange.value = 250;
+            updateRangeValue(quickScreenRange, 'val1');
+
+            // สั่งให้วิดีโอพื้นหลัง UI เริ่มรันลูปสแตนด์บายไว้ล่วงหน้าเพื่อเลี่ยงการโดนบราวเซอร์สั่งหยุด
+            uiBgVideo.muted = true;
+            uiBgVideo.play().catch(e => console.log("คลิปพื้นหลังสแตนด์บายเรียบร้อย"));
+        };
+
+        function startIntroVideo() {
+            if (hasStarted) return; 
+            hasStarted = true;
+
+            promptOverlay.style.opacity = '0';
+            setTimeout(() => { promptOverlay.style.display = 'none'; }, 300);
+
+            video.muted = false;
+            video.currentTime = 0;
+            
+            let playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    setTimeout(exitLoadingScreen, 5500);
+                }).catch(error => {
+                    exitLoadingScreen();
+                });
+            }
+        }
+
+        function exitLoadingScreen() {
+            if(!loadingScreen.classList.contains('fade-out')) {
+                loadingScreen.classList.add('fade-out');
+                mainPanel.classList.add('show');
+                
+                uiBgVideo.play().catch(e => console.log("คลิปพื้นหลังรันต่อเนื่องคงที่"));
+
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    video.pause(); 
+                }, 500);
+            }
+        }
+
+        function toggleAccordion(id) {
+            const el = document.getElementById(id);
+            const content = el.querySelector('.menu-content');
+            const isActive = el.classList.contains('active');
+            
+            document.querySelectorAll('.menu-section').forEach(section => {
+                section.classList.remove('active');
+                section.querySelector('.menu-content').style.maxHeight = null;
+                
+                if (section.id === 'sec-aimbots') {
+                    section.querySelectorAll('.cyber-switch input').forEach(input => {
+                        input.checked = false;
+                    });
+                }
+            });
+
+            if (!isActive) {
+                el.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+        }
+
+        function updateRangeValue(slider, valId) {
+            document.getElementById(valId).innerText = slider.value + '%';
+        }
+    </script>
+</body>
+</html>
