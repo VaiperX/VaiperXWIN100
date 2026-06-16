@@ -35,7 +35,6 @@
             position: relative;
         }
 
-        /* เลเยอร์แคนวาสสำหรับวาดเส้นสายฟ้าผ่าสีแดงพาดหน้าจอ */
         #lightningCanvas {
             position: absolute;
             top: 0;
@@ -646,17 +645,32 @@
         const mainPanel = document.getElementById('mainPanel');
         const promptOverlay = document.getElementById('promptOverlay');
         
-        let hasStarted = false; 
+        let fadeInterval = null;
 
-        // คำสั่งแก้อาการภาพค้าง/สื่อค้าง เมื่อมีการสลับแอปหรือเปิดซ้ำบนโมบาย
+        // [คำสั่งล็อกความปลอดภัยขั้นสูงสุด] ฟังก์ชันบังคับปลุกวิดีโอและเพลงพื้นหลังให้วิ่งต่อเนื่องไร้ขีดจำกัด
         function forcePlayMedia() {
+            // เช็กสถานะการผ่านหน้าโหลดดิ้งจาก sessionStorage เพื่อความแม่นยำของระบบ PWA
+            const isMenuAppeared = sessionStorage.getItem('vaiper_app_started') === 'true';
+
             if (uiBgVideo) {
                 uiBgVideo.muted = true;
-                uiBgVideo.currentTime = uiBgVideo.currentTime || 0; 
-                uiBgVideo.play().catch(e => console.log("วิดีโอพื้นหลังรันต่อเนื่อง"));
+                // ปลุกวิดีโอให้หลุดพ้นจากสถานะแช่แข็งของระบบ iOS
+                uiBgVideo.play().then(() => {
+                    console.log("วิดีโอพื้นหลังรันต่อเนื่องคงที่");
+                }).catch(() => {
+                    // กรณีโดนเบราว์เซอร์บล็อกจัดหนัก ให้แอบขยับเวลาคลิปเล็กน้อยแล้วสั่งรันซ้ำ
+                    uiBgVideo.currentTime = uiBgVideo.currentTime || 0.1;
+                    uiBgVideo.play().catch(e => console.log("กำลังเร่งกำลังไฟวิดีโอ..."));
+                });
             }
-            if (hasStarted && mainPanel.classList.contains('show') && bgMusic) {
-                bgMusic.play().catch(e => console.log("เพลงพื้นหลังรันต่อเนื่อง"));
+
+            if (isMenuAppeared && bgMusic) {
+                bgMusic.play().then(() => {
+                    console.log("เพลงพื้นหลังรันต่อเนื่องคงที่");
+                }).catch(() => {
+                    // หากโดนสั่ง Pause ตอนดีดสลับแอป ให้สั่งชาร์จเล่นซ้ำทันที
+                    bgMusic.play().catch(e => console.log("กำลังเร่งกำลังไฟระบบเสียง..."));
+                });
             }
         }
 
@@ -668,7 +682,8 @@
         }
 
         function createLightningStrike() {
-            if (!hasStarted || !mainPanel.classList.contains('show')) return; 
+            const isMenuAppeared = sessionStorage.getItem('vaiper_app_started') === 'true';
+            if (!isMenuAppeared || !mainPanel.classList.contains('show')) return; 
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
@@ -707,29 +722,55 @@
             }, randomDelay);
         }
 
-        // ฟังก์ชันเร่งเสียงเพลงจาก 0 ถึง 100% ภายใน 2 วินาที (ปรับความถี่รอบละ 200ms เด้งสเต็ปละ 10%)
+        // ฟังก์ชันเร่งระดับเสียงจาก 0 ถึง 100% ภายใน 2 วินาทีพอดีเป๊ะ
         function playBackgroundMusic() {
             if (bgMusic) {
+                if (fadeInterval) clearInterval(fadeInterval);
                 bgMusic.volume = 0; 
-                let musicPromise = bgMusic.play();
                 
-                if (musicPromise !== undefined) {
-                    musicPromise.then(() => {
-                        let currentStep = 0;
-                        let totalSteps = 10;
-                        let fadeInterval = setInterval(() => {
-                            currentStep++;
-                            bgMusic.volume = currentStep / totalSteps; 
-                            
-                            if (currentStep >= totalSteps) {
-                                bgMusic.volume = 1.0;
-                                clearInterval(fadeInterval);
-                            }
-                        }, 200); 
-                    }).catch(e => console.log("สื่อเสียงสแตนด์บายเรียบร้อย"));
-                }
+                bgMusic.play().then(() => {
+                    let currentStep = 0;
+                    let totalSteps = 10;
+                    fadeInterval = setInterval(() => {
+                        currentStep++;
+                        bgMusic.volume = currentStep / totalSteps; 
+                        
+                        if (currentStep >= totalSteps) {
+                            bgMusic.volume = 1.0;
+                            clearInterval(fadeInterval);
+                        }
+                    }, 200); 
+                }).catch(e => {
+                    // หากเปิดเข้าแอปซ้ำแล้วระบบเสียงโดนล็อก ให้สแตนด์บายเปิดระดับเสียงรอไว้ทันที
+                    bgMusic.volume = 1.0;
+                    bgMusic.play().catch(err => console.log("สแตนด์บายเสียงเสร็จสิ้น"));
+                });
             }
         }
+
+        // ดักจับชุดคำสั่งเมื่อตรวจพบผู้ใช้สลับหน้าจอ เข้า-ออกแอป หรือดึงตัวหน้าเว็บกลับมาจากสถานะแช่แข็ง (Bfcache)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                forcePlayMedia();
+            }
+        });
+
+        window.addEventListener('pageshow', function(event) {
+            // บังคับปลุกทุกกรณี ไม่ว่าจะโหลดหน้าสด หรือดึงมาจาก Page Cache (event.persisted)
+            forcePlayMedia();
+            
+            // ตรวจเช็กระบบกรณีเข้าแอปซ้ำแล้วเคยผ่านหน้าโหลดดิ้งมาแล้ว ให้คงหน้าเมนูหลักไว้เลยไม่ต้องโหลดซ้ำ
+            if (sessionStorage.getItem('vaiper_app_started') === 'true') {
+                if(loadingScreen) loadingScreen.style.display = 'none';
+                if(mainPanel) mainPanel.classList.add('show');
+                resizeCanvas();
+            }
+        });
+
+        window.addEventListener('pagehide', function() {
+            // รักษาสถานะมีเดียไว้ก่อนจะโดนสลับหน้า
+            console.log("แอปพักระบบเบื้องหลัง");
+        });
 
         window.onload = function() {
             document.querySelectorAll('.menu-section').forEach(section => {
@@ -741,25 +782,23 @@
             quickScreenRange.value = 250;
             updateRangeValue(quickScreenRange, 'val1');
 
+            // บังคับรันสื่อทันทีที่หน้าแรกพร้อมทำงาน
             forcePlayMedia();
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
+
+            // ตรวจสอบว่าเคยเข้าแอปมาแล้วในเซสชันนี้หรือไม่ ถ้าเคยให้คงหน้าหลักไว้เลยเพื่อสปีดแอป
+            if (sessionStorage.getItem('vaiper_app_started') === 'true') {
+                loadingScreen.style.display = 'none';
+                mainPanel.classList.add('show');
+                initLightningStorm();
+            }
         };
 
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                forcePlayMedia();
-            }
-        });
-
-        window.addEventListener('pageshow', function() {
-            forcePlayMedia();
-        });
-
         function startIntroVideo() {
-            if (hasStarted) return; 
-            hasStarted = true;
+            if (sessionStorage.getItem('vaiper_app_started') === 'true') return;
 
+            sessionStorage.setItem('vaiper_app_started', 'true');
             promptOverlay.style.opacity = '0';
             setTimeout(() => { promptOverlay.style.display = 'none'; }, 300);
 
