@@ -35,7 +35,7 @@
             position: relative;
         }
 
-        /* เลเยอร์ผืนผ้าใบ Canvas สำหรับวาดเส้นสายฟ้าผ่าพาดผ่านหน้าจอ */
+        /* เลเยอร์แคนวาสสำหรับวาดเส้นสายฟ้าผ่าสีแดงพาดหน้าจอ */
         #lightningCanvas {
             position: absolute;
             top: 0;
@@ -43,7 +43,7 @@
             width: 100%;
             height: 100%;
             z-index: 4; 
-            pointer-events: none; /* กดนิ้วสัมผัสทะลุผ่านไปใช้งานเมนูได้ปกติ */
+            pointer-events: none;
         }
 
         /* ================= หน้า Loading Screen ================= */
@@ -94,6 +94,10 @@
             padding: 0 20px;
         }
 
+        @webkit-keyframes textPulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
         @keyframes textPulse {
             0%, 100% { opacity: 0.4; transform: scale(0.98); }
             50% { opacity: 1; transform: scale(1.02); }
@@ -611,15 +615,7 @@
         document.addEventListener('contextmenu', event => event.preventDefault());
 
         document.addEventListener('keydown', function(e) {
-            if (e.keyCode === 123) {
-                e.preventDefault();
-                return false;
-            }
-            if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
-                e.preventDefault();
-                return false;
-            }
-            if (e.ctrlKey && e.keyCode === 85) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
                 e.preventDefault();
                 return false;
             }
@@ -656,14 +652,19 @@
         
         let hasStarted = false; 
 
-        function forcePlayBgVideo() {
+        // ระบบปลุกและบังคับเล่นสื่อ (วิดีโอ + เพลง) ป้องกันเบราว์เซอร์แช่แข็ง Cache
+        function forcePlayMedia() {
             if (uiBgVideo) {
                 uiBgVideo.muted = true;
-                uiBgVideo.play().catch(e => console.log("กำลังปลุกวิดีโอพื้นหลัง..."));
+                uiBgVideo.currentTime = uiBgVideo.currentTime || 0; // ป้องกันค้างที่เฟรมเดิม
+                uiBgVideo.play().catch(e => console.log("กำลังรันวิดีโอพื้นหลัง..."));
+            }
+            // ปลุกเพลงให้เล่นต่อกรณีผ่านหน้าโหลดดิ้งแล้ว
+            if (hasStarted && mainPanel.classList.contains('show') && bgMusic) {
+                bgMusic.play().catch(e => console.log("กำลังปลุกเพลงพื้นหลัง..."));
             }
         }
 
-        // ฟังก์ชันปรับขนาดผืนผ้าใบสายฟ้าให้พอดีกล่องเมนูหลัก
         function resizeCanvas() {
             if(canvas && mainPanel) {
                 canvas.width = mainPanel.offsetWidth;
@@ -671,7 +672,6 @@
             }
         }
 
-        // ฟังก์ชันวาดเม็ดสายฟ้าเลเซอร์เรืองแสงสีแดงผ่าแวบแบบสุ่มจุด
         function createLightningStrike() {
             if (!hasStarted || !mainPanel.classList.contains('show')) return; 
             
@@ -680,10 +680,10 @@
             let startX = Math.random() * canvas.width;
             let startY = 0;
             
-            ctx.strokeStyle = 'rgba(255, 13, 13, 0.95)'; // นีออนสีแดงสดเข้ม
+            ctx.strokeStyle = 'rgba(255, 13, 13, 0.95)'; 
             ctx.lineWidth = Math.random() * 2 + 1.5;
             ctx.shadowBlur = 15;
-            ctx.shadowColor = '#ff0000'; // แสงสะท้อนรอบตัวสายฟ้า
+            ctx.shadowColor = '#ff0000'; 
             
             ctx.beginPath();
             ctx.moveTo(startX, startY);
@@ -704,7 +704,6 @@
             }, 120);
         }
 
-        // วงลูปพายุสายฟ้าสุ่มผ่า ทุก ๆ 3 ถึง 7 วินาที
         function initLightningStorm() {
             let randomDelay = Math.floor(Math.random() * (7000 - 3000 + 1)) + 3000;
             setTimeout(() => {
@@ -713,7 +712,7 @@
             }, randomDelay);
         }
 
-        // ฟังก์ชันเล่นเพลงพื้นหลังแบบค่อย ๆ เพิ่มระดับเสียง (Fade-in 2 วินาที)
+        // [แก้ไขจุดสำคัญ] เร่งระดับเสียงจาก 0 ถึง 100% ภายในเวลา 2 วินาทีพอดีเป๊ะ (แบ่งรอบละ 200ms รวม 10 รอบ)
         function playBackgroundMusic() {
             if (bgMusic) {
                 bgMusic.volume = 0; 
@@ -721,15 +720,18 @@
                 
                 if (musicPromise !== undefined) {
                     musicPromise.then(() => {
+                        let currentStep = 0;
+                        let totalSteps = 10;
                         let fadeInterval = setInterval(() => {
-                            if (bgMusic.volume < 0.9) {
-                                bgMusic.volume += 0.1;
-                            } else {
+                            currentStep++;
+                            bgMusic.volume = currentStep / totalSteps; // ปรับเพิ่มทีละ 10% (0.1, 0.2, ... จนถึง 1.0)
+                            
+                            if (currentStep >= totalSteps) {
                                 bgMusic.volume = 1.0;
                                 clearInterval(fadeInterval);
                             }
-                        }, 200);
-                    }).catch(e => console.log("เสียงรอสัมผัสเปิดระบบ"));
+                        }, 200); // 200ms * 10 steps = 2000ms (2 วินาทีพอดี)
+                    }).catch(e => console.log("เสียงรอการตอบรับระบบ"));
                 }
             }
         }
@@ -744,25 +746,20 @@
             quickScreenRange.value = 250;
             updateRangeValue(quickScreenRange, 'val1');
 
-            forcePlayBgVideo();
+            forcePlayMedia();
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
         };
 
+        // ดักจับทั้งตอนสลับแอป และเปิดแอปซ้ำผ่านการดึง Cache (Bfcache) เพื่อบังคับให้สื่อเล่นทันทีกึ่งอัตโนมัติ
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
-                forcePlayBgVideo();
-                if (hasStarted && mainPanel.classList.contains('show') && bgMusic) {
-                    bgMusic.play().catch(e => console.log("ปลุกเสียงพื้นหลัง"));
-                }
+                forcePlayMedia();
             }
         });
 
         window.addEventListener('pageshow', function() {
-            forcePlayBgVideo();
-            if (hasStarted && mainPanel.classList.contains('show') && bgMusic) {
-                bgMusic.play().catch(e => console.log("ปลุกเสียงพื้นหลัง"));
-            }
+            forcePlayMedia();
         });
 
         function startIntroVideo() {
@@ -790,10 +787,10 @@
                 loadingScreen.classList.add('fade-out');
                 mainPanel.classList.add('show');
                 
-                forcePlayBgVideo();
-                playBackgroundMusic(); // เล่นเพลงพื้นหลังที่สั่งค่อย ๆ ดังขึ้น
+                forcePlayMedia();
+                playBackgroundMusic(); 
                 resizeCanvas();
-                initLightningStorm(); // สตาร์ทเริ่มให้สายฟ้าสุ่มทำงานผ่าแวบบนแผง UI ทันที
+                initLightningStorm(); 
 
                 setTimeout(() => {
                     loadingScreen.style.display = 'none';
