@@ -94,10 +94,6 @@
             padding: 0 20px;
         }
 
-        @webkit-keyframes textPulse {
-            0%, 100% { opacity: 0.4; transform: scale(0.98); }
-            50% { opacity: 1; transform: scale(1.02); }
-        }
         @keyframes textPulse {
             0%, 100% { opacity: 0.4; transform: scale(0.98); }
             50% { opacity: 1; transform: scale(1.02); }
@@ -482,7 +478,7 @@
         </video>
         
         <audio id="uiBgMusic" loop preload="auto">
-            <source src="https://www.image2url.com/r2/default/videos/1781581189514-fbee9d0b-f063-4a11-ab80-0b5f831daa81.mov">
+            <source src="https://www.image2url.com/r2/default/audio/1781583921627-1aec1be8-4a73-4883-bb12-a823641bbdc8.mp3" type="audio/mpeg">
         </audio>
 
         <canvas id="lightningCanvas"></canvas>
@@ -652,16 +648,15 @@
         
         let hasStarted = false; 
 
-        // ระบบปลุกและบังคับเล่นสื่อ (วิดีโอ + เพลง) ป้องกันเบราว์เซอร์แช่แข็ง Cache
+        // คำสั่งแก้อาการภาพค้าง/สื่อค้าง เมื่อมีการสลับแอปหรือเปิดซ้ำบนโมบาย
         function forcePlayMedia() {
             if (uiBgVideo) {
                 uiBgVideo.muted = true;
-                uiBgVideo.currentTime = uiBgVideo.currentTime || 0; // ป้องกันค้างที่เฟรมเดิม
-                uiBgVideo.play().catch(e => console.log("กำลังรันวิดีโอพื้นหลัง..."));
+                uiBgVideo.currentTime = uiBgVideo.currentTime || 0; 
+                uiBgVideo.play().catch(e => console.log("วิดีโอพื้นหลังรันต่อเนื่อง"));
             }
-            // ปลุกเพลงให้เล่นต่อกรณีผ่านหน้าโหลดดิ้งแล้ว
             if (hasStarted && mainPanel.classList.contains('show') && bgMusic) {
-                bgMusic.play().catch(e => console.log("กำลังปลุกเพลงพื้นหลัง..."));
+                bgMusic.play().catch(e => console.log("เพลงพื้นหลังรันต่อเนื่อง"));
             }
         }
 
@@ -712,7 +707,7 @@
             }, randomDelay);
         }
 
-        // [แก้ไขจุดสำคัญ] เร่งระดับเสียงจาก 0 ถึง 100% ภายในเวลา 2 วินาทีพอดีเป๊ะ (แบ่งรอบละ 200ms รวม 10 รอบ)
+        // ฟังก์ชันเร่งเสียงเพลงจาก 0 ถึง 100% ภายใน 2 วินาที (ปรับความถี่รอบละ 200ms เด้งสเต็ปละ 10%)
         function playBackgroundMusic() {
             if (bgMusic) {
                 bgMusic.volume = 0; 
@@ -724,14 +719,14 @@
                         let totalSteps = 10;
                         let fadeInterval = setInterval(() => {
                             currentStep++;
-                            bgMusic.volume = currentStep / totalSteps; // ปรับเพิ่มทีละ 10% (0.1, 0.2, ... จนถึง 1.0)
+                            bgMusic.volume = currentStep / totalSteps; 
                             
                             if (currentStep >= totalSteps) {
                                 bgMusic.volume = 1.0;
                                 clearInterval(fadeInterval);
                             }
-                        }, 200); // 200ms * 10 steps = 2000ms (2 วินาทีพอดี)
-                    }).catch(e => console.log("เสียงรอการตอบรับระบบ"));
+                        }, 200); 
+                    }).catch(e => console.log("สื่อเสียงสแตนด์บายเรียบร้อย"));
                 }
             }
         }
@@ -751,7 +746,6 @@
             window.addEventListener('resize', resizeCanvas);
         };
 
-        // ดักจับทั้งตอนสลับแอป และเปิดแอปซ้ำผ่านการดึง Cache (Bfcache) เพื่อบังคับให้สื่อเล่นทันทีกึ่งอัตโนมัติ
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 forcePlayMedia();
