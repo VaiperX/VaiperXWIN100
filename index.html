@@ -101,6 +101,7 @@
         .video-loading-screen.fade-out {
             opacity: 0;
             visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
         /* ================= ส่วนโครงสร้างหน้าเมนูหลัก UI ================= */
@@ -465,21 +466,17 @@
             <div class="tap-text">แตะจอ 1 ครั้งเพื่อเข้าสู่ระบบ</div>
         </div>
         
-        <video class="loading-video" id="introVideo" playsinline muted preload="auto" loop>
-            <source src="https://www.image2url.com/r2/default/videos/1781556257881-4c6e1a59-38c2-4960-a2a1-16268972ec80.mov" type="video/mp4">
+        <video class="loading-video" id="introVideo" playsinline preload="auto" loop>
+            <source src="https://media.discordapp.net/attachments/1347319667542327448/1516898181869473842/copy_05F0710C-FBE9-47DF-9DB2-A41791CF2AD9.mov?ex=6a345105&is=6a32ff85&hm=13e634748627fc8a17d11611af85f8689b5f517281ddaaa3a65a9304bf354e7e&" type="video/mp4">
         </video>
     </div>
 
     <div class="cyber-panel" id="mainPanel">
         
-        <video class="ui-bg-video" id="uiBgVideo" autoplay loop muted playsinline webkit-playsinline preload="auto">
-            <source src="https://www.image2url.com/r2/default/videos/1781557880330-ac57abd5-fc32-4b1d-ad6f-4e061738b4b5.mp4" type="video/mp4">
+        <video class="ui-bg-video" id="uiBgVideo" loop playsinline webkit-playsinline preload="auto">
+            <source src="https://media.discordapp.net/attachments/1347319667542327448/1516898181869473842/copy_05F0710C-FBE9-47DF-9DB2-A41791CF2AD9.mov?ex=6a345105&is=6a32ff85&hm=13e634748627fc8a17d11611af85f8689b5f517281ddaaa3a65a9304bf354e7e&" type="video/mp4">
         </video>
         
-        <audio id="uiBgMusic" loop preload="auto">
-            <source src="https://www.image2url.com/r2/default/audio/1781583921627-1aec1be8-4a73-4883-bb12-a823641bbdc8.mp3" type="audio/mpeg">
-        </audio>
-
         <canvas id="lightningCanvas"></canvas>
         
         <div class="ui-video-overlay"></div>
@@ -638,39 +635,27 @@
         // ================= ส่วนควบคุม UI หน้าเว็บ =================
         const video = document.getElementById('introVideo');
         const uiBgVideo = document.getElementById('uiBgVideo');
-        const bgMusic = document.getElementById('uiBgMusic');
         const canvas = document.getElementById('lightningCanvas');
         const ctx = canvas.getContext('2d');
         const loadingScreen = document.getElementById('loadingScreen');
         const mainPanel = document.getElementById('mainPanel');
         const promptOverlay = document.getElementById('promptOverlay');
         
-        let fadeInterval = null;
+        let hasStarted = false; 
 
-        // [คำสั่งล็อกความปลอดภัยขั้นสูงสุด] ฟังก์ชันบังคับปลุกวิดีโอและเพลงพื้นหลังให้วิ่งต่อเนื่องไร้ขีดจำกัด
+        // คำสั่งล็อกระบบปลุกสื่อกรณีสลับแอปเข้าออกใหม่เพื่อความเสถียรสูงสุดบน iOS
         function forcePlayMedia() {
-            // เช็กสถานะการผ่านหน้าโหลดดิ้งจาก sessionStorage เพื่อความแม่นยำของระบบ PWA
             const isMenuAppeared = sessionStorage.getItem('vaiper_app_started') === 'true';
 
-            if (uiBgVideo) {
-                uiBgVideo.muted = true;
-                // ปลุกวิดีโอให้หลุดพ้นจากสถานะแช่แข็งของระบบ iOS
-                uiBgVideo.play().then(() => {
-                    console.log("วิดีโอพื้นหลังรันต่อเนื่องคงที่");
-                }).catch(() => {
-                    // กรณีโดนเบราว์เซอร์บล็อกจัดหนัก ให้แอบขยับเวลาคลิปเล็กน้อยแล้วสั่งรันซ้ำ
-                    uiBgVideo.currentTime = uiBgVideo.currentTime || 0.1;
-                    uiBgVideo.play().catch(e => console.log("กำลังเร่งกำลังไฟวิดีโอ..."));
-                });
+            // ดักปลุกวิดีโอหน้าอินโทร (ถ้าแอปยังโหลดไม่เสร็จ)
+            if (!isMenuAppeared && video) {
+                video.play().catch(e => console.log("กำลังปลุกวิดีโออินโทร..."));
             }
 
-            if (isMenuAppeared && bgMusic) {
-                bgMusic.play().then(() => {
-                    console.log("เพลงพื้นหลังรันต่อเนื่องคงที่");
-                }).catch(() => {
-                    // หากโดนสั่ง Pause ตอนดีดสลับแอป ให้สั่งชาร์จเล่นซ้ำทันที
-                    bgMusic.play().catch(e => console.log("กำลังเร่งกำลังไฟระบบเสียง..."));
-                });
+            // ดักปลุกวิดีโอพื้นหลัง UI หลัก (เมื่อแอปทำงานฉากหลังเรียบร้อย)
+            if (uiBgVideo) {
+                uiBgVideo.muted = true;
+                uiBgVideo.play().catch(e => console.log("กำลังปลุกวิดีโอพื้นหลัง..."));
             }
         }
 
@@ -722,54 +707,21 @@
             }, randomDelay);
         }
 
-        // ฟังก์ชันเร่งระดับเสียงจาก 0 ถึง 100% ภายใน 2 วินาทีพอดีเป๊ะ
-        function playBackgroundMusic() {
-            if (bgMusic) {
-                if (fadeInterval) clearInterval(fadeInterval);
-                bgMusic.volume = 0; 
-                
-                bgMusic.play().then(() => {
-                    let currentStep = 0;
-                    let totalSteps = 10;
-                    fadeInterval = setInterval(() => {
-                        currentStep++;
-                        bgMusic.volume = currentStep / totalSteps; 
-                        
-                        if (currentStep >= totalSteps) {
-                            bgMusic.volume = 1.0;
-                            clearInterval(fadeInterval);
-                        }
-                    }, 200); 
-                }).catch(e => {
-                    // หากเปิดเข้าแอปซ้ำแล้วระบบเสียงโดนล็อก ให้สแตนด์บายเปิดระดับเสียงรอไว้ทันที
-                    bgMusic.volume = 1.0;
-                    bgMusic.play().catch(err => console.log("สแตนด์บายเสียงเสร็จสิ้น"));
-                });
-            }
-        }
-
-        // ดักจับชุดคำสั่งเมื่อตรวจพบผู้ใช้สลับหน้าจอ เข้า-ออกแอป หรือดึงตัวหน้าเว็บกลับมาจากสถานะแช่แข็ง (Bfcache)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 forcePlayMedia();
             }
         });
 
-        window.addEventListener('pageshow', function(event) {
-            // บังคับปลุกทุกกรณี ไม่ว่าจะโหลดหน้าสด หรือดึงมาจาก Page Cache (event.persisted)
+        window.addEventListener('pageshow', function() {
             forcePlayMedia();
             
-            // ตรวจเช็กระบบกรณีเข้าแอปซ้ำแล้วเคยผ่านหน้าโหลดดิ้งมาแล้ว ให้คงหน้าเมนูหลักไว้เลยไม่ต้องโหลดซ้ำ
+            // ล็อกกรณีเข้าแอปซ้ำและเคยผ่านหน้าอินโทรไปแล้ว ให้ข้ามหน้าโหลดดิ้งโผล่เข้า UI หลักทันที
             if (sessionStorage.getItem('vaiper_app_started') === 'true') {
                 if(loadingScreen) loadingScreen.style.display = 'none';
                 if(mainPanel) mainPanel.classList.add('show');
                 resizeCanvas();
             }
-        });
-
-        window.addEventListener('pagehide', function() {
-            // รักษาสถานะมีเดียไว้ก่อนจะโดนสลับหน้า
-            console.log("แอปพักระบบเบื้องหลัง");
         });
 
         window.onload = function() {
@@ -782,12 +734,10 @@
             quickScreenRange.value = 250;
             updateRangeValue(quickScreenRange, 'val1');
 
-            // บังคับรันสื่อทันทีที่หน้าแรกพร้อมทำงาน
             forcePlayMedia();
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
 
-            // ตรวจสอบว่าเคยเข้าแอปมาแล้วในเซสชันนี้หรือไม่ ถ้าเคยให้คงหน้าหลักไว้เลยเพื่อสปีดแอป
             if (sessionStorage.getItem('vaiper_app_started') === 'true') {
                 loadingScreen.style.display = 'none';
                 mainPanel.classList.add('show');
@@ -798,17 +748,18 @@
         function startIntroVideo() {
             if (sessionStorage.getItem('vaiper_app_started') === 'true') return;
 
-            sessionStorage.setItem('vaiper_app_started', 'true');
             promptOverlay.style.opacity = '0';
             setTimeout(() => { promptOverlay.style.display = 'none'; }, 300);
 
+            // บังคับวิดีโอเปิดเสียงสตรีมมิ่งตั้งแต่ต้น
             video.muted = false;
             video.currentTime = 0;
             
             let playPromise = video.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    setTimeout(exitLoadingScreen, 5500);
+                    // [แก้ไขจุดสำคัญ]: สั่งให้เล่นวิดีโอไป 6 วินาทีพอดีเป๊ะ แล้วค่อยเฟดกางแผง UI ออกมา
+                    setTimeout(exitLoadingScreen, 6000);
                 }).catch(error => {
                     exitLoadingScreen();
                 });
@@ -817,11 +768,18 @@
 
         function exitLoadingScreen() {
             if(!loadingScreen.classList.contains('fade-out')) {
+                // เซ็ตความจำว่าระบบเริ่มต้นเข้าใช้งานแผงหลักแล้ว
+                sessionStorage.setItem('vaiper_app_started', 'true');
+
                 loadingScreen.classList.add('fade-out');
                 mainPanel.classList.add('show');
                 
+                // ดึงตำแหน่งวินาทีปัจจุบันของวิดีโอหน้าอินโทร ส่งต่อไปให้วิดีโอพื้นหลัง UI เล่นเชื่อมโยงกันอย่างสมูท
+                if (uiBgVideo && video) {
+                    uiBgVideo.currentTime = video.currentTime;
+                }
+                
                 forcePlayMedia();
-                playBackgroundMusic(); 
                 resizeCanvas();
                 initLightningStorm(); 
 
