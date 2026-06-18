@@ -45,26 +45,42 @@
             pointer-events: none;
         }
 
-        /* ================= หน้า Loading Screen ================= */
+        /* วิดีโอเดี่ยวเล่นเต็มจออยู่เลเยอร์ล่างสุด */
+        .app-shared-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ม่านดำบังหน้าจอตอนแรก */
+        .black-shutter {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000000;
+            z-index: 9998;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        /* ================= หน้าอินโทรแรกเข้าสู่ระบบ ================= */
         .video-loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #000000;
+            background-color: transparent; 
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-        }
-
-        .loading-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; 
-            pointer-events: none; 
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
         .tap-prompt-overlay {
@@ -76,9 +92,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.4); 
+            background: rgba(0, 0, 0, 0.6); 
             z-index: 10000;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.4s ease;
         }
 
         .tap-text {
@@ -101,7 +117,6 @@
         .video-loading-screen.fade-out {
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
         /* ================= ส่วนโครงสร้างหน้าเมนูหลัก UI ================= */
@@ -110,20 +125,27 @@
             max-width: 420px;
             height: calc(100vh - 24px);
             max-height: 820px;
-            background: #000000; 
-            border: 1px solid rgba(255, 13, 13, 0.6);
+            
+            /* [จุดแก้ไขสำคัญ]: ปรับพื้นหลังเป็นแบบโปร่งแสง (rgba) และใส่ backdrop-filter เพื่อดึงภาพวิดีโอหลังจอให้ทะลุเข้ามาในเมนู */
+            background: rgba(10, 2, 2, 0.35); 
+            backdrop-filter: blur(12px) saturate(120%);
+            -webkit-backdrop-filter: blur(12px) saturate(120%);
+            
+            border: 2px solid rgba(255, 13, 13, 0.7);
             border-radius: 28px;
-            box-shadow: 0 0 40px rgba(255, 13, 13, 0.25), inset 0 0 20px rgba(255, 13, 13, 0.1);
+            box-shadow: 0 0 35px rgba(255, 13, 13, 0.3), inset 0 0 25px rgba(255, 13, 13, 0.15);
             padding: 24px 18px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             overflow: hidden;
             margin: 12px;
+            
             opacity: 0;
             transform: scale(0.95);
             transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative; 
+            z-index: 2; 
         }
 
         .cyber-panel.show {
@@ -131,24 +153,14 @@
             transform: scale(1);
         }
 
-        .ui-bg-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-            pointer-events: none;
-        }
-
+        /* ปรับแผ่นฟิล์มซ้อนทับใน UI ให้เบาลง เพื่อให้รายละเอียดคลิปด้านหลังชัดเจนขึ้น */
         .ui-video-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, rgba(5, 1, 1, 0.78) 0%, rgba(15, 2, 2, 0.88) 100%);
+            background: linear-gradient(180deg, rgba(5, 1, 1, 0.4) 0%, rgba(15, 2, 2, 0.55) 100%);
             z-index: 2;
             pointer-events: none;
         }
@@ -169,20 +181,21 @@
             width: 0px;
         }
 
+        /* ปรับแต่งส่วนหัวข้อเมนูต่างๆ ให้โปร่งใสและเห็นวิดีโอด้านหลังได้อย่างลงตัว */
         .menu-section {
-            background: rgba(18, 2, 2, 0.6);
-            border: 1px solid rgba(255, 13, 13, 0.25);
+            background: rgba(25, 4, 4, 0.45);
+            border: 1px solid rgba(255, 13, 13, 0.3);
             border-radius: 20px;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            backdrop-filter: blur(8px); 
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
 
         .menu-section.active {
-            border-color: rgba(255, 13, 13, 0.8);
-            box-shadow: 0 0 20px rgba(255, 13, 13, 0.25);
-            background: rgba(30, 3, 3, 0.85);
+            border-color: rgba(255, 13, 13, 0.85);
+            box-shadow: 0 0 15px rgba(255, 13, 13, 0.3);
+            background: rgba(45, 5, 5, 0.65);
         }
 
         .menu-header {
@@ -215,7 +228,7 @@
             font-weight: 700;
             color: #ffffff;
             letter-spacing: 0.8px;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
         }
 
         .arrow-icon {
@@ -235,7 +248,7 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
         }
 
         .content-inner {
@@ -243,7 +256,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            border-top: 1px solid rgba(255, 13, 13, 0.15);
+            border-top: 1px solid rgba(255, 13, 13, 0.2);
         }
 
         .control-row {
@@ -366,8 +379,8 @@
         }
 
         .select-card {
-            background: rgba(20, 2, 2, 0.6);
-            border: 1px solid rgba(255, 13, 13, 0.5);
+            background: rgba(20, 2, 2, 0.5);
+            border: 1px solid rgba(255, 13, 13, 0.4);
             border-radius: 14px;
             padding: 14px;
             text-align: center;
@@ -378,7 +391,6 @@
             font-size: 0.92rem;
             color: #ffffff;
             font-weight: 600;
-            box-shadow: 0 0 15px rgba(255, 13, 13, 0.1);
         }
 
         .select-card .radio-dot {
@@ -402,8 +414,8 @@
         }
 
         .action-btn {
-            background: rgba(20, 2, 2, 0.6);
-            border: 1px solid rgba(255, 13, 13, 0.5);
+            background: rgba(20, 2, 2, 0.5);
+            border: 1px solid rgba(255, 13, 13, 0.4);
             border-radius: 14px;
             padding: 14px;
             color: #ffffff;
@@ -413,7 +425,6 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            box-shadow: 0 0 15px rgba(255, 13, 13, 0.1);
         }
 
         .start-btn {
@@ -444,10 +455,10 @@
             font-family: 'Orbitron', sans-serif;
             font-size: 0.68rem;
             font-weight: 700;
-            color: #8c2727;
+            color: #a63232;
             letter-spacing: 1.5px;
             margin-top: 12px;
-            border-top: 1px solid rgba(255, 13, 13, 0.2);
+            border-top: 1px solid rgba(255, 13, 13, 0.25);
             padding-top: 14px;
             position: relative;
             z-index: 3;
@@ -461,21 +472,19 @@
 </head>
 <body>
 
+    <div class="black-shutter" id="blackShutter"></div>
+
+    <video class="app-shared-video" id="appSharedVideo" loop playsinline webkit-playsinline preload="auto">
+        <source src="https://media.discordapp.net/attachments/1347319667542327448/1516898181869473842/copy_05F0710C-FBE9-47DF-9DB2-A41791CF2AD9.mov?ex=6a345105&is=6a32ff85&hm=13e634748627fc8a17d11611af85f8689b5f517281ddaaa3a65a9304bf354e7e&" type="video/mp4">
+    </video>
+
     <div class="video-loading-screen" id="loadingScreen" onclick="startIntroVideo()">
         <div class="tap-prompt-overlay" id="promptOverlay">
             <div class="tap-text">แตะจอ 1 ครั้งเพื่อเข้าสู่ระบบ</div>
         </div>
-        
-        <video class="loading-video" id="introVideo" playsinline preload="auto" loop>
-            <source src="https://media.discordapp.net/attachments/1347319667542327448/1516898181869473842/copy_05F0710C-FBE9-47DF-9DB2-A41791CF2AD9.mov?ex=6a345105&is=6a32ff85&hm=13e634748627fc8a17d11611af85f8689b5f517281ddaaa3a65a9304bf354e7e&" type="video/mp4">
-        </video>
     </div>
 
     <div class="cyber-panel" id="mainPanel">
-        
-        <video class="ui-bg-video" id="uiBgVideo" loop playsinline webkit-playsinline preload="auto">
-            <source src="https://media.discordapp.net/attachments/1347319667542327448/1516898181869473842/copy_05F0710C-FBE9-47DF-9DB2-A41791CF2AD9.mov?ex=6a345105&is=6a32ff85&hm=13e634748627fc8a17d11611af85f8689b5f517281ddaaa3a65a9304bf354e7e&" type="video/mp4">
-        </video>
         
         <canvas id="lightningCanvas"></canvas>
         
@@ -603,7 +612,7 @@
     </div>
 
     <script>
-        // ================= ระบบความปลอดภัยฝั่ง Client เบื้องต้น =================
+        // ================= ระบบความปลอดภัย Client เบื้องต้น =================
         document.addEventListener('contextmenu', event => event.preventDefault());
 
         document.addEventListener('keydown', function(e) {
@@ -622,7 +631,6 @@
             }
         }, 1000);
 
-        // ================= ฟังก์ชันสั่งดีดเด้งเปิดแอป Potatso =================
         function launchPotatso() {
             window.location.href = "potatso://";
             setTimeout(function() {
@@ -633,29 +641,17 @@
         }
 
         // ================= ส่วนควบคุม UI หน้าเว็บ =================
-        const video = document.getElementById('introVideo');
-        const uiBgVideo = document.getElementById('uiBgVideo');
+        const sharedVideo = document.getElementById('appSharedVideo');
         const canvas = document.getElementById('lightningCanvas');
         const ctx = canvas.getContext('2d');
         const loadingScreen = document.getElementById('loadingScreen');
         const mainPanel = document.getElementById('mainPanel');
         const promptOverlay = document.getElementById('promptOverlay');
-        
-        let hasStarted = false; 
+        const blackShutter = document.getElementById('blackShutter');
 
-        // คำสั่งล็อกระบบปลุกสื่อกรณีสลับแอปเข้าออกใหม่เพื่อความเสถียรสูงสุดบน iOS
         function forcePlayMedia() {
-            const isMenuAppeared = sessionStorage.getItem('vaiper_app_started') === 'true';
-
-            // ดักปลุกวิดีโอหน้าอินโทร (ถ้าแอปยังโหลดไม่เสร็จ)
-            if (!isMenuAppeared && video) {
-                video.play().catch(e => console.log("กำลังปลุกวิดีโออินโทร..."));
-            }
-
-            // ดักปลุกวิดีโอพื้นหลัง UI หลัก (เมื่อแอปทำงานฉากหลังเรียบร้อย)
-            if (uiBgVideo) {
-                uiBgVideo.muted = true;
-                uiBgVideo.play().catch(e => console.log("กำลังปลุกวิดีโอพื้นหลัง..."));
+            if (sharedVideo) {
+                sharedVideo.play().catch(e => console.log("กำลังรันล็อกวิดีโอพื้นหลัง..."));
             }
         }
 
@@ -715,9 +711,8 @@
 
         window.addEventListener('pageshow', function() {
             forcePlayMedia();
-            
-            // ล็อกกรณีเข้าแอปซ้ำและเคยผ่านหน้าอินโทรไปแล้ว ให้ข้ามหน้าโหลดดิ้งโผล่เข้า UI หลักทันที
             if (sessionStorage.getItem('vaiper_app_started') === 'true') {
+                if(blackShutter) blackShutter.style.opacity = '0';
                 if(loadingScreen) loadingScreen.style.display = 'none';
                 if(mainPanel) mainPanel.classList.add('show');
                 resizeCanvas();
@@ -734,58 +729,51 @@
             quickScreenRange.value = 250;
             updateRangeValue(quickScreenRange, 'val1');
 
-            forcePlayMedia();
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
 
             if (sessionStorage.getItem('vaiper_app_started') === 'true') {
+                blackShutter.style.opacity = '0';
                 loadingScreen.style.display = 'none';
                 mainPanel.classList.add('show');
                 initLightningStorm();
+                forcePlayMedia();
             }
         };
 
         function startIntroVideo() {
             if (sessionStorage.getItem('vaiper_app_started') === 'true') return;
 
-            promptOverlay.style.opacity = '0';
-            setTimeout(() => { promptOverlay.style.display = 'none'; }, 300);
+            if(promptOverlay) promptOverlay.style.opacity = '0';
 
-            // บังคับวิดีโอเปิดเสียงสตรีมมิ่งตั้งแต่ต้น
-            video.muted = false;
-            video.currentTime = 0;
+            sharedVideo.muted = false;
+            sharedVideo.currentTime = 0;
             
-            let playPromise = video.play();
+            let playPromise = sharedVideo.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    // [แก้ไขจุดสำคัญ]: สั่งให้เล่นวิดีโอไป 6 วินาทีพอดีเป๊ะ แล้วค่อยเฟดกางแผง UI ออกมา
-                    setTimeout(exitLoadingScreen, 6000);
+                    blackShutter.style.opacity = '0'; 
+                    // เล่นวิดีโอเดี่ยวเต็มจอไป 6 วินาที ก่อนที่หน้าต่าง UI โปร่งใสจะเด้งขึ้นมาครอบทับ
+                    setTimeout(showPanelOverVideo, 6000);
                 }).catch(error => {
-                    exitLoadingScreen();
+                    blackShutter.style.opacity = '0';
+                    showPanelOverVideo();
                 });
             }
         }
 
-        function exitLoadingScreen() {
-            if(!loadingScreen.classList.contains('fade-out')) {
-                // เซ็ตความจำว่าระบบเริ่มต้นเข้าใช้งานแผงหลักแล้ว
+        function showPanelOverVideo() {
+            if(!mainPanel.classList.contains('show')) {
                 sessionStorage.setItem('vaiper_app_started', 'true');
 
                 loadingScreen.classList.add('fade-out');
                 mainPanel.classList.add('show');
                 
-                // ดึงตำแหน่งวินาทีปัจจุบันของวิดีโอหน้าอินโทร ส่งต่อไปให้วิดีโอพื้นหลัง UI เล่นเชื่อมโยงกันอย่างสมูท
-                if (uiBgVideo && video) {
-                    uiBgVideo.currentTime = video.currentTime;
-                }
-                
-                forcePlayMedia();
                 resizeCanvas();
                 initLightningStorm(); 
 
                 setTimeout(() => {
                     loadingScreen.style.display = 'none';
-                    video.pause(); 
                 }, 500);
             }
         }
